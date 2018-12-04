@@ -11,11 +11,17 @@ public class Admin {
          System.out.println("please enter only the table name");
          return;
       }
+      PreparedStatement stmt = null;
+      ResultSet res = null;
+      String query = "Select * from `"+toks[1]+"`;";
       try{
-         String query = "Select * from `"+toks[1]+"`;";
-         Statement stmt = conn.prepareStatement(query); 
-      }catch(Exception e){
-         //just so it compiles right now
+         stmt = conn.prepareStatement(query); 
+         res = stmt.executeQuery();
+         Tables.prettyPrint(res);
+      } catch (SQLException e){
+         System.out.println("error creating prepared stmt");
+         System.out.println(e);
       }
+      
    }
 }
