@@ -9,16 +9,15 @@ import java.io.*;
 import java.lang.*;
 import java.text.*;
 import java.math.*;
-
 // main function. Contains main program loop
 public class InnReservations {
-
-
+   private static Connection conn = null; 
+   private static final String DB_FILE = "ServerSettings.txt";
    // enter main program loop
    public static void main(String args[]) {
 
    // eeb: you may want to put various set-up functionality here
-
+   initConn(); 
    boolean exit = false;
    Scanner input = new Scanner(System.in);
 
@@ -57,14 +56,38 @@ public class InnReservations {
          + "- (G)uest\n"
          + "- (Q)uit\n");
    }
-
-
-
+   private static void initConn() {
+      String url = null;
+      String uid = null;
+      String pwd = null;
+      try {
+         Class.forName("com.mysql.jdbc.Driver").newInstance();
+      } catch (Exception ex) {
+         System.out.println("Driver not found");
+         System.out.println(ex);
+         System.exit(1);
+      }
+      try{
+         Scanner fscan = new Scanner(new File(DB_FILE));
+         url = fscan.nextLine();
+         uid = fscan.nextLine();
+         pwd = fscan.nextLine();
+      } catch (Exception e){
+         System.out.println("malformed " + DB_FILE);
+         System.exit(1);
+      }
+      try {
+         conn = DriverManager.getConnection(url,uid, pwd);
+      } catch (Exception e) {
+         System.out.println("Could not open connection");
+         System.out.println(e); 
+         System.exit(1);
+      }
+   }
    // Program loop for admin subsystem
    private static void adminLoop() {
       boolean exit = false;
       Scanner input = new Scanner(System.in);
-
       while (!exit) {
          displayAdmin();
 
