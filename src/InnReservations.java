@@ -83,6 +83,8 @@ public class InnReservations {
          System.out.println(e); 
          System.exit(1);
       }
+
+      Admin.setConn(conn);
    }
    // Program loop for admin subsystem
    private static void adminLoop() {
@@ -97,10 +99,13 @@ public class InnReservations {
 
 
          switch(option) {
-            case 'v':   System.out.println("displayTable\n");
-                        break;
-            case 'c':   System.out.println("clearDB\n");
-                        break;
+            case 'v':   
+               System.out.println("displayTable\n");
+               Admin.display(tokens);
+               break;
+            case 'c':   
+               System.out.println("clearDB\n");
+               break;
             case 'l':   System.out.println("loadDB\n");
                         break;
             case 'r':   System.out.println("removeDB\n");
