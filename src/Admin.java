@@ -19,7 +19,7 @@ public class Admin {
          res = stmt.executeQuery();
          Tables.prettyPrint(res);
       } catch (SQLException e){
-         System.out.println("error creating prepared stmt");
+         System.out.println("error with db");
          System.out.println(e);
       }
       
