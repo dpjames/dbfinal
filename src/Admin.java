@@ -21,5 +21,11 @@ public class Admin {
       }
    }
    public static void clearDB(){
+      for(int i = 0; i < Tables.tables.length; i++){
+         Tables.doUpdate("delete from `"+Tables.tables[i]+"` where 1 = 1", conn);
+      }
+   }
+   public static void loadDB(){
+
    }
 }

@@ -1,6 +1,7 @@
 import java.sql.*;
 import java.util.ArrayList;
 public class Tables {
+   public static final String tables[] = {"reservations", "rooms"};
    public static void prettyPrint(ResultSet res) throws SQLException{
       if(res == null){
          return;
@@ -56,5 +57,16 @@ public class Tables {
          System.out.println(e);
       }
       return null;
+   }
+   public static int doUpdate(String query, Connection conn){
+      try{
+         Statement stmt = conn.createStatement(); 
+         int res = stmt.executeUpdate(query);
+         return res;
+      } catch (SQLException e){
+         System.out.println("error with db");
+         System.out.println(e);
+      }
+      return -1;
    }
 }
