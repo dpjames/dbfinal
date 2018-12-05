@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.util.ArrayList;
 
 public class Admin {
    private static Connection conn;
@@ -22,10 +23,30 @@ public class Admin {
    }
    public static void clearDB(){
       for(int i = 0; i < Tables.tables.length; i++){
-         Tables.doUpdate("delete from `"+Tables.tables[i]+"` where 1 = 1", conn);
+         Tables.doUpdate("delete from `"+Tables.tables[i]+"` where 1 = 1;", conn);
       }
    }
-   public static void loadDB(){
-
+   public static void loadDB() {
+      try {
+         ArrayList<Integer> create = new ArrayList<Integer>();
+         ArrayList<Integer> fill = new ArrayList<Integer>();
+         for(int i = 0; i < Tables.tables.length; i++){
+            String query = "select count(*) from `"+Tables.tables[i]+"`;";
+            ResultSet cur = Tables.doQuery(query,conn);
+            if(cur == null){
+               create.add(i);   
+            } else if(cur.next() && cur.getString(1) == "0"){
+               fill.add(i);   
+            }
+         } 
+         for(int i : create){
+              
+         }
+         for(int i : fill){
+             
+         }
+      } catch (SQLException e){
+         System.out.println(e);
+      }
    }
 }
