@@ -2,6 +2,7 @@ import java.sql.*;
 import java.util.ArrayList;
 public class Tables {
    public static final String tables[] = {"reservations", "rooms"};
+   public static final String DB_NAME = "INN";
    public static void prettyPrint(ResultSet res) throws SQLException{
       if(res == null){
          return;
@@ -33,6 +34,10 @@ public class Tables {
       for(int i = 0; i < ncols; i++){
          linesize+=(maxstrlen[i]+3);
       }
+      for(int i = 0; i < linesize; i++){
+         System.out.print("-");
+      }
+      System.out.println("");
       for(ArrayList<String> row : table) {
          String fmtStr = "";
          for(int i = 0; i < ncols; i++){
@@ -69,4 +74,5 @@ public class Tables {
       }
       return -1;
    }
+
 }

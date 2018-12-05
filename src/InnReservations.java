@@ -103,21 +103,20 @@ public class InnReservations {
 
          switch(option) {
             case 'v':   
-               System.out.println("displayTable\n");
                Admin.display(tokens);
                break;
             case 'c':   
-               System.out.println("clearDB\n");
                Admin.clearDB();
                break;
             case 'l':   
-               System.out.println("loadDB\n");
-               Admin.loadDB();
+               Admin.loadDB(); //TODO still display stat stage.
                break;
-            case 'r':   System.out.println("removeDB\n");
-                        break;
-            case 'b':   exit = true;
-                        break;
+            case 'r':   
+               Admin.removeDB();
+               break;
+            case 'b':   
+               exit = true;
+               break;
          }
       }
    }
@@ -222,9 +221,9 @@ public class InnReservations {
       // Display UI
       // add your own information for the state of the database
       System.out.println("Welcome, Admin.\n\n"
-         + "Current Status: " + "<put in state informnation>" + "\n"
-         + "Reservations: " + "<put in count of reservations>" + "\n"
-         + "Rooms: " + "<put in room information>" + "\n\n"
+         + "Current Status: " + Admin.getStatus() + "\n"
+         + "Reservations: " + Admin.getCount("reservations") + "\n"
+         + "Rooms: " + Admin.getCount("rooms") + "\n\n"
          + "Choose an option:\n"
          + "- (V)iew [table name] - Displays table contents\n"
          + "- (C)lear - Deletes all table contents\n"
