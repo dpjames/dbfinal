@@ -74,5 +74,11 @@ public class Tables {
       }
       return -1;
    }
-
+   public static final char badChars[] = {0,'\'','\"','\b','\n','\r','\t',26,'\\','%','_'};
+   public static String escape(String str){
+      for(int i = 0; i < badChars.length; i++){
+         str = str.replace(badChars[i]+"", "\\"+badChars[i]);
+      }
+      return str;
+   }
 }

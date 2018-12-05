@@ -87,6 +87,7 @@ public class InnReservations {
       }
 
       Admin.setConn(conn);
+      Guest.setConn(conn);
    }
 
    // Program loop for admin subsystem
@@ -170,8 +171,9 @@ public class InnReservations {
          char option = input.next().toLowerCase().charAt(0);
 
          switch(option) {
-            case 'r':   System.out.println("roomsAndRates\n");
-                        break;
+            case 'r':   
+               Guest.roomsAndRates();
+               break;
             case 's':   System.out.println("viewStays\n");
                         break;
             case 'b':   exit = true;
