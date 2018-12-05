@@ -15,13 +15,11 @@ public class Admin {
       ResultSet res = null;
       String query = "Select * from `"+toks[1]+"`;";
       try{
-         stmt = conn.prepareStatement(query); 
-         res = stmt.executeQuery();
-         Tables.prettyPrint(res);
-      } catch (SQLException e){
-         System.out.println("error with db");
+         Tables.prettyPrint(Tables.doQuery(query, conn));
+      }catch(SQLException e){
          System.out.println(e);
       }
-      
+   }
+   public static void clearDB(){
    }
 }

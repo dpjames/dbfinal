@@ -105,6 +105,7 @@ public class InnReservations {
                break;
             case 'c':   
                System.out.println("clearDB\n");
+               Admin.clearDB();
                break;
             case 'l':   System.out.println("loadDB\n");
                         break;

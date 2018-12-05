@@ -2,6 +2,9 @@ import java.sql.*;
 import java.util.ArrayList;
 public class Tables {
    public static void prettyPrint(ResultSet res) throws SQLException{
+      if(res == null){
+         return;
+      }
       ResultSetMetaData md = res.getMetaData();
       int ncols = md.getColumnCount(); 
       ArrayList<String> cnames = new ArrayList<String>();
@@ -42,5 +45,16 @@ public class Tables {
          }
          System.out.println("");
       }
+   }
+   public static ResultSet doQuery(String query, Connection conn){
+      try{
+         PreparedStatement stmt = conn.prepareStatement(query); 
+         ResultSet res = stmt.executeQuery();
+         return res;
+      } catch (SQLException e){
+         System.out.println("error with db");
+         System.out.println(e);
+      }
+      return null;
    }
 }
