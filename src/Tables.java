@@ -1,8 +1,12 @@
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Calendar;
 public class Tables {
    public static final String tables[] = {"reservations", "rooms"};
    public static final String DB_NAME = "INN";
+   public static final long MS_PER_DAY = 86400000;
+
    public static void prettyPrint(ResultSet res) throws SQLException{
       if(res == null){
          return;
@@ -84,5 +88,31 @@ public class Tables {
          }
       }
       return str;
+   }
+   public static long sqlDateToMs(String str){
+      String[] nvals = str.split("-");
+      int year = Integer.parseInt(nvals[0]);
+      int month = Integer.parseInt(nvals[1]) - 1;
+      int date = Integer.parseInt(nvals[2]);
+      Calendar c = Calendar.getInstance();
+      c.set(year, month, date, 0, 0);
+      return c.getTimeInMillis();
+   }
+   public static long msToDays(long ms){
+      return ms / MS_PER_DAY;
+   }
+   public static long dateDiff(String d1, String d2){
+      long d1t = sqlDateToMs(d1);
+      long d2t = sqlDateToMs(d2);
+      long days = msToDays(d1t-d2t);
+      return days;
+   }
+   public static String msToSqlDate(long ms){
+      Calendar c = Calendar.getInstance();
+      c.setTime(new Date(ms));
+      int day = c.get(Calendar.DAY_OF_MONTH);
+      int month = c.get(Calendar.MONTH) + 1;
+      int year = c.get(Calendar.YEAR);
+      return (year+"-"+month+"-"+day);
    }
 }

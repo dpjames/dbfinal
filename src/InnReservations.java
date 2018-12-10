@@ -110,7 +110,7 @@ public class InnReservations {
                Admin.clearDB();
                break;
             case 'l':   
-               Admin.loadDB(); //TODO still display stat stage.
+               Admin.loadDB();
                break;
             case 'r':   
                Admin.removeDB();
@@ -263,7 +263,7 @@ public class InnReservations {
       String monthName = input.next().toLowerCase();
       int month = monthNum(monthName);
       int day = input.nextInt();
-      String date = "'2010-" + month + "-" + day + "'";
+      String date = "2010-" + month + "-" + day;
       return date;
    }
 
