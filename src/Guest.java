@@ -1,6 +1,7 @@
 import java.sql.*;
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class Guest {
    private static Connection conn;
@@ -39,37 +40,42 @@ public class Guest {
       }
    }
 
-// Checking Room Availability. When the user chooses the ‘‘Check Availability’’ option,
-// the system will offer the following dialog to the user. The system will provide the means for the
-// user to enter a pair of dates (check-in and check-out). Once the dates are entered, the system will
-// show information about whether or not the room is available on each of the nights of the proposed
-// stay5
-// . If the room is available for a given night, the system will display the room rate (see R-3 for
-// room rate computation). If the room is unavailable, the system will display ‘‘Occupied’’ for that
-// night. If the room is available for the duration of the selected stay (i.e., available on each night), a
-// ‘‘Place a Reservation’’ option will be provided for the user to complete the reservation.
-   private static final int[][] specialDates = {{1,1},{4,4},{9,6},{10,30}};
-   public static String rateSql(long dayms, String sqlday){
+   private static final int[][] specialDates = {{1,1},{7,4},{9,6},{10,30}};
+   public static double dayMult(String sqlday){
       double mult = 1;
       String[] dayvals = sqlday.split("-");  
       int todayYear =  Integer.parseInt(dayvals[0]);
       int todayMonth = Integer.parseInt(dayvals[1]);
       int todayDay =   Integer.parseInt(dayvals[2]);
-
-      //weeknight is 1
-      //weekend is 1.1
-      //jan 1, july 4, sep 6, oct 30 is 1.25
+      Calendar c = Calendar.getInstance();
+      c.set(todayYear, todayMonth - 1, todayDay);
+      int dow = c.get(Calendar.DAY_OF_WEEK);
+      if(dow == Calendar.SUNDAY || dow == Calendar.SATURDAY){
+         mult = 1.1;
+      }
       for(int i = 0; i < specialDates.length; i++){
          int month = specialDates[i][0];
          int day = specialDates[i][1];
          if(todayMonth == month && todayDay == day){
-            mult = 1.1;
+            mult = 1.25;
          }
       }
+      return mult;
+   }
+   public static String rateSql(String sqlday){
       return 
-         "select BasePrice * "+mult+" " +
+         "select BasePrice * "+dayMult(sqlday)+" " +
          "from rooms rmprice " +
          "where rmprice.RoomId = rm.RoomId";
+   }
+   public static double findRateMult(String in,String out){
+      long days = Tables.dateDiff(out, in);
+      double rate = dayMult(in);
+      long inms = Tables.sqlDateToMs(in);
+      for(int i = 0; i < days; i++){
+         rate = Math.max(rate, dayMult(Tables.msToSqlDate(inms+Tables.MS_PER_DAY * i)));
+      }
+      return rate;
    }
    public static void checkAvailability(String rid){
       System.out.println("checkin (month day): ");
@@ -92,29 +98,71 @@ public class Guest {
             "   select if(rs1.CheckIn <= '"+today+"' and rs1.CheckOut > '"+today+"',true,false) from rooms rm1, reservations rs1 "+
             "   where rs1.Room = rm1.RoomId and rm1.RoomId = rm.RoomId "+
             ") "+
-            ",("+rateSql(todayms, today)+"),'occupied') as 'rate'"+
+            ",("+rateSql(today)+"),'occupied') as 'rate'"+
             "from rooms rm, reservations rs "+
-            "where "+ridWhere+" rm.RoomId = rs.Room ";
+            "where "+ridWhere+" rm.RoomId = rs.Room order by rm.RoomId";
          try {
-            Tables.prettyPrint(Tables.doQuery(query, conn));
+            ResultSet res = Tables.doQuery(query, conn);
+            Tables.prettyPrint(res);
          } catch(SQLException e){
             //System.out.println(e);
          }
       }
-
-      /*
-      String query = 
-         "select distinct rm.RoomId " + 
-         "from rooms rm, reservations rs " +
-         "where rs.Room = rm.RoomId and not (rs.CheckIn > '"+checkout+"' or rs.CheckOut < '"+checkin+"')";   
-      if(rid != null){
-         query+=" and rm.RoomId = '" + rid + "';";
-      }
+      String availableAll = 
+         "select distinct rms.Room  " + 
+         "from reservations rms " + 
+         "where  " + 
+         "'"+checkout+"' <= all  " + 
+         "( " + 
+         "   select r.CheckIn from reservations r where r.Room = rms.Room " +
+            "and r.CheckOut > '"+checkin+"'" + 
+         ") " + 
+         "or " + 
+         "'"+checkin+"' >= all " + 
+         "( " + 
+         "   select r.CheckOut from reservations r where r.Room = rms.Room " + 
+             "and r.CheckIn <= '"+checkout+"'" + 
+         ");"; 
+      System.out.println(availableAll);
       try {
-         Tables.prettyPrint(Tables.doQuery(query, conn));
-      } catch(SQLException e){
-         System.out.println(e);
+         System.out.println("available for all: ");
+         Tables.prettyPrint(Tables.doQuery(availableAll, conn));
+      } catch(SQLException e) {
+            //System.out.println(e);
       }
-      */
+      char reserve = InnReservations.reserveOrGoBack();
+      if(reserve == 'r'){
+         makeReservation();
+      }
+   }
+   public static void makeReservation(){
+      System.out.println("checkin (month day): ");
+      String checkin = Tables.escape(InnReservations.getDate());
+      System.out.println("checkout (month day): ");
+      String checkout = Tables.escape(InnReservations.getDate());
+      double mult = findRateMult(checkin, checkout);
+      String roomRateQuery = 
+         "select BasePrice * "+mult+" from rooms rm1 where rm1.RoomId = rms.Room";
+      String availableAll = 
+         "select distinct rms.Room, ("+roomRateQuery+")"+
+         " as 'Nightly Rate' " + 
+         "from reservations rms " + 
+         "where  " + 
+         "'"+checkout+"' <= all  " + 
+         "( " + 
+         "   select r.CheckIn from reservations r where r.Room = rms.Room " +
+            "and r.CheckOut > '"+checkin+"'" + 
+         ") " + 
+         "or " + 
+         "'"+checkin+"' >= all " + 
+         "( " + 
+         "   select r.CheckOut from reservations r where r.Room = rms.Room " + 
+             "and r.CheckIn <= '"+checkout+"'" + 
+         ");"; 
+      try {
+         Tables.prettyPrint(Tables.doQuery(availableAll, conn));
+      } catch (SQLException e) {
+         //System.out.println(e);
+      }
    }
 }

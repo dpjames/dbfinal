@@ -174,8 +174,9 @@ public class InnReservations {
             case 'r':   
                Guest.roomsAndRates();
                break;
-            case 's':   System.out.println("viewStays\n");
-                        break;
+            case 's':   
+               Guest.makeReservation();
+               break;
             case 'b':   exit = true;
                         break;
          }
