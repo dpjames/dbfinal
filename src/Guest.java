@@ -48,7 +48,29 @@ public class Guest {
 // room rate computation). If the room is unavailable, the system will display ‘‘Occupied’’ for that
 // night. If the room is available for the duration of the selected stay (i.e., available on each night), a
 // ‘‘Place a Reservation’’ option will be provided for the user to complete the reservation.
+   private static final int[][] specialDates = {{1,1},{4,4},{9,6},{10,30}};
+   public static String rateSql(long dayms, String sqlday){
+      double mult = 1;
+      String[] dayvals = sqlday.split("-");  
+      int todayYear =  Integer.parseInt(dayvals[0]);
+      int todayMonth = Integer.parseInt(dayvals[1]);
+      int todayDay =   Integer.parseInt(dayvals[2]);
 
+      //weeknight is 1
+      //weekend is 1.1
+      //jan 1, july 4, sep 6, oct 30 is 1.25
+      for(int i = 0; i < specialDates.length; i++){
+         int month = specialDates[i][0];
+         int day = specialDates[i][1];
+         if(todayMonth == month && todayDay == day){
+            mult = 1.1;
+         }
+      }
+      return 
+         "select BasePrice * "+mult+" " +
+         "from rooms rmprice " +
+         "where rmprice.RoomId = rm.RoomId";
+   }
    public static void checkAvailability(String rid){
       System.out.println("checkin (month day): ");
       String checkin = Tables.escape(InnReservations.getDate());
@@ -58,11 +80,26 @@ public class Guest {
       System.out.println("this many days: " + ndays);
       long checkinms = Tables.sqlDateToMs(checkin);
       for(int i = 0; i < ndays; i++){
-         System.out.println(Tables.msToSqlDate(checkinms + (i * Tables.MS_PER_DAY)));
-         String query =  
-            "select distinct rm.RoomId " +
-            "from rooms rm, reservtions rs " +
-            "where rs.Room = rm.RoomId and not (";
+         long todayms = checkinms + (i * Tables.MS_PER_DAY);
+         String today = Tables.msToSqlDate(todayms);
+         String ridWhere = "";
+         if(rid != null){
+            ridWhere+=" rm.RoomId = '" + rid + "' and ";
+         }
+         String query = 
+            "select distinct '"+today+"' as date, rm.RoomId, " +
+            "if(false = all ( "+
+            "   select if(rs1.CheckIn <= '"+today+"' and rs1.CheckOut > '"+today+"',true,false) from rooms rm1, reservations rs1 "+
+            "   where rs1.Room = rm1.RoomId and rm1.RoomId = rm.RoomId "+
+            ") "+
+            ",("+rateSql(todayms, today)+"),'occupied') as 'rate'"+
+            "from rooms rm, reservations rs "+
+            "where "+ridWhere+" rm.RoomId = rs.Room ";
+         try {
+            Tables.prettyPrint(Tables.doQuery(query, conn));
+         } catch(SQLException e){
+            //System.out.println(e);
+         }
       }
 
       /*
