@@ -18,7 +18,7 @@ public class Admin {
       try{
          Tables.prettyPrint(Tables.doQuery(query, conn));
       }catch(SQLException e){
-         System.out.println(e);
+         //System.out.println(e);
       }
    }
    public static void clearDB(){
@@ -50,7 +50,7 @@ public class Admin {
             Tables.doUpdate(query, conn);
          }
       } catch (SQLException e){
-         System.out.println(e);
+         //System.out.println(e);
       }
    }
    public static void removeDB(){
@@ -93,7 +93,7 @@ public class Admin {
          count.next();
          return count.getString(1);
       } catch(SQLException e){
-         System.out.println(e);
+         //System.out.println(e);
       }
       return "Err";
    }

@@ -89,6 +89,7 @@ public class InnReservations {
       Admin.setConn(conn);
       Guest.setConn(conn);
       Owner.setConn(conn);
+      Tables.init(conn);
    }
 
    // Program loop for admin subsystem

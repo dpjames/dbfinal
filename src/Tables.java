@@ -6,7 +6,22 @@ public class Tables {
    public static final String tables[] = {"reservations", "rooms"};
    public static final String DB_NAME = "INN";
    public static final long MS_PER_DAY = 86400000;
-
+   public static void init(Connection c){
+      System.out.println("init");
+      ArrayList<Integer> create = new ArrayList<Integer>();
+      for(int i = 0; i < Tables.tables.length; i++){
+         String query = "select count(*) from `"+Tables.tables[i]+"`;";
+         ResultSet cur = Tables.doQuery(query,c);
+         if(cur == null){
+            create.add(i);   
+         } 
+      }
+      for(int i : create){
+         String tname = Tables.tables[i];
+         String query = "create table `"+tname+"` like "+Tables.DB_NAME+"."+tname+";";
+         Tables.doUpdate(query, c);
+      }
+   }
    public static void prettyPrint(ResultSet res) throws SQLException{
       if(res == null){
          return;
@@ -62,8 +77,8 @@ public class Tables {
          ResultSet res = stmt.executeQuery();
          return res;
       } catch (SQLException e){
-         System.out.println("error with db");
-         System.out.println(e);
+         //System.out.println("error with db");
+         //System.out.println(e);
       }
       return null;
    }
@@ -73,8 +88,8 @@ public class Tables {
          int res = stmt.executeUpdate(query);
          return res;
       } catch (SQLException e){
-         System.out.println("error with db");
-         System.out.println(e);
+         //System.out.println("error with db");
+         //System.out.println(e);
       }
       return -1;
    }

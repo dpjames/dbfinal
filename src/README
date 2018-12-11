@@ -1,0 +1,7 @@
+David James and Dayton Muxlow
+
+To run there are two options:
+you can run the run.sh script included here, or manually run the commands:
+
+javac *.java
+java -cp "mysql-connector-java-5.1.18-bin.jar:./"  InnReservations
