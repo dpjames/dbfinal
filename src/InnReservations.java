@@ -88,6 +88,7 @@ public class InnReservations {
 
       Admin.setConn(conn);
       Guest.setConn(conn);
+      Owner.setConn(conn);
    }
 
    // Program loop for admin subsystem
@@ -123,6 +124,17 @@ public class InnReservations {
    }
 
 
+   private static void occupancyMenu() {
+      boolean exit = false;
+      Scanner input = new Scanner(System.in);
+
+      while (!exit) {
+         System.out.println("Occupancy Menu\n");
+
+         exit = Owner.occupancy_overview();
+      }
+   }
+
    // Program loop for owner subsystem
    private static void ownerLoop() {
       boolean exit = false;
@@ -139,10 +151,9 @@ public class InnReservations {
             dataOpt = tokens[1].charAt(0);
 
          switch(option) {
-            case 'o':   
+            case 'o':  
                clearScreen();
-               System.out.println("occupancyMenu\n");
-               Owner.occupancy_overview();
+               occupancyMenu();
                break;
             case 'd':
                System.out.println("revenueData\n");
