@@ -133,6 +133,9 @@ public class InnReservations {
          System.out.println("Occupancy Menu\n");
 
          exit = Owner.occupancy_overview();
+         if (!exit) {
+            exit = askIfGoBack() == 'b';
+         }
       }
    }
 
@@ -164,10 +167,10 @@ public class InnReservations {
                }
                break;
             case 's':
-               Owner.Reservations();
+               Owner.Reservations(null);
                break;
             case 'r':   
-               System.out.println("viewRooms\n");
+               Owner.Rooms();
                break;
             case 'b':   
                exit = true;

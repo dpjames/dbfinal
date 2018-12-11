@@ -16,7 +16,6 @@ public class Owner {
       }
 
       if (numDates == 1) {
-         System.out.println(dates[0]);
          String query = 
             "SELECT DISTINCT(ro.RoomName), ro.RoomId, " +
                "IF(ro.RoomId IN " +
@@ -35,16 +34,15 @@ public class Owner {
             System.out.println(e);
          }
          String roomCode = InnReservations.getRoomCodeOrQ();
-         System.out.println(roomCode);
          if (roomCode.equals("q")) {
             return true;
          }
          query =
-            "SELECT * \n" +
-            "FROM reservations \n" +
-            "WHERE Room = '" + roomCode + 
+            "SELECT RoomName, re.* \n" +
+            "FROM reservations re, rooms \n" +
+            "WHERE Room = '" + roomCode +
                "' AND CheckIn <= '" + dates[0] + 
-               "' AND CheckOut > '" + dates[0] + "';";
+               "' AND CheckOut > '" + dates[0] + "' AND RoomId = Room;";
 
          results = Tables.doQuery(query, conn);
          try{
@@ -90,7 +88,6 @@ public class Owner {
          }
 
          String roomCode = InnReservations.getRoomCodeOrQ();
-         System.out.println(roomCode);
          if (roomCode.equals("q")) {
             return true;
          }
@@ -114,14 +111,13 @@ public class Owner {
          }
 
          String resCode = InnReservations.getReservCodeOrQ();
-         System.out.println(resCode);
          if (resCode.equals("q")) {
             return true;
          }
          query =
-            "SELECT *\n" +
-            "FROM reservations \n" +
-            "WHERE Code = " + resCode + ";";
+            "SELECT RoomName, re.*\n" +
+            "FROM reservations re, rooms \n" +
+            "WHERE Code = " + resCode + " AND RoomId = Room;";
 
          results = Tables.doQuery(query, conn);
          try{
@@ -164,11 +160,6 @@ public class Owner {
          "ORDER BY RoomName, MONTH(CheckOut);";
 
       ResultSet res = Tables.doQuery(query, conn);
-      // try{
-      //    Tables.prettyPrint(res);
-      // }catch(SQLException e){
-      //    System.out.println(e);
-      // }
 
       ArrayList<ArrayList<String>> table = new ArrayList<ArrayList<String>>();
       ArrayList<String> cnames = new ArrayList<String>();
@@ -230,38 +221,47 @@ public class Owner {
       }
    }
 
-   public static void Reservations() {
+   public static void Reservations(String roomPassed) {
       while (true) {
-      int numDates = 2;
-      String dates[] = new String[2];
-      for (int i = 0; i < numDates; i++) {
-         System.out.print("Enter date (Month day): ");
-         dates[i] = InnReservations.getDate();
-      }
 
-      String query =
-         "SELECT Code, Room, CheckIn, CheckOut \n" +
-         "FROM reservations \n" +
-         "WHERE CheckIn >= '" + dates[0] + 
-            "' AND CheckIn <= '" + dates[1] + "';";
+      String roomCode = roomPassed;
+      String query;
+      ResultSet results;
+      String dates[] = {"2010-01-01", "2010-12-31"};
 
-      ResultSet results = Tables.doQuery(query, conn);
-      try{
-         Tables.prettyPrint(results);
-      }catch(SQLException e){
-         System.out.println(e);
-      }
+      if (roomPassed == null) {
+         int numDates = 2;
+         for (int i = 0; i < numDates; i++) {
+            System.out.print("Enter date (Month day): ");
+            dates[i] = InnReservations.getDate();
+         }
 
-      String roomCode = InnReservations.getRoomCodeOrQ();
-      if (roomCode.equals("q")) {
-         return;
+         query =
+            "SELECT Code, Room, CheckIn, CheckOut \n" +
+            "FROM reservations \n" +
+            "WHERE CheckIn >= '" + dates[0] + 
+               "' AND CheckIn <= '" + dates[1] + "'\n" +
+            "ORDER BY CheckIn;";
+
+         results = Tables.doQuery(query, conn);
+         try{
+            Tables.prettyPrint(results);
+         }catch(SQLException e){
+            System.out.println(e);
+         }
+
+         roomCode = InnReservations.getRoomCodeOrQ();
+         if (roomCode.equals("q")) {
+            return;
+         }
       }
 
       query = "SELECT Code, Room, CheckIn, CheckOut \n" +
          "FROM reservations \n" +
          "WHERE Room = '" + roomCode + 
             "' AND CheckIn >= '" + dates[0] + 
-            "' AND CheckIn <= '" + dates[1] + "';";
+            "' AND CheckIn <= '" + dates[1] + "'\n" +
+         "ORDER BY CheckIn;";
 
       try {
          Tables.prettyPrint(Tables.doQuery(query, conn));
@@ -270,14 +270,13 @@ public class Owner {
       }
 
       String resCode = InnReservations.getReservCodeOrQ();
-      System.out.println(resCode);
       if (resCode.equals("q")) {
          return;
       }
       query =
-         "SELECT *\n" +
-         "FROM reservations \n" +
-         "WHERE Code = " + resCode + ";";
+         "SELECT RoomName, re.*\n" +
+         "FROM reservations re, rooms \n" +
+         "WHERE Code = " + resCode + " AND RoomId = Room;";
 
       results = Tables.doQuery(query, conn);
       try{
@@ -292,6 +291,61 @@ public class Owner {
 
       }
 
+   }
+
+   public static void Rooms() {
+      String query =
+         "SELECT RoomId, RoomName \n" +
+         "FROM rooms \n;";
+
+      ResultSet results = Tables.doQuery(query, conn);
+      try{
+         Tables.prettyPrint(results);
+      }catch(SQLException e){
+         System.out.println(e);
+      }
+
+      String option_code = InnReservations.viewRooms();
+      if (option_code.charAt(0) == 'q') {
+         return;
+      }
+
+      Scanner oc_scanner = new Scanner(option_code);
+
+      String option = oc_scanner.next();
+
+      String code = oc_scanner.next();
+
+      oc_scanner.close();
+
+      if (option.equals("v")) {
+         query = 
+         "SELECT SUM(DATEDIFF(re.CheckOut, re.CheckIn)) 'Nights Occupied', " +
+           "(SUM(DATEDIFF(re.CheckOut, re.CheckIn))/365) * 100 '% Time Occupied', " +
+           "SUM(DATEDIFF(re.CheckOut, re.CheckIn) * re.Rate) '2010 Revenue', " +
+           "(SUM(DATEDIFF(re.CheckOut, re.CheckIn) * re.Rate)/" +
+             "(" +
+               "SELECT SUM(DATEDIFF(re2.CheckOut, re2.CheckIn) * re2.Rate)\n" +
+               "FROM rooms ro2, reservations re2 \n" +
+               "WHERE ro2.RoomId = re2.Room AND YEAR(re2.CheckOut) = '2010' \n" +
+             ")" +
+           ") * 100 '% 2010 Revenue'\n" +
+         "FROM rooms ro, reservations re \n" +
+         "WHERE ro.RoomId = " + code + " AND ro.RoomId = re.Room " +
+           "AND YEAR(re.CheckOut) = '2010';";
+         results = Tables.doQuery(query, conn);
+         try{
+            Tables.prettyPrint(results);
+         }catch(SQLException e){
+            System.out.println(e);
+         }
+      }
+      else if (option.equals("r")) {
+         Reservations(code.replace("'", ""));
+      }
+      else {
+         System.out.println("Option: '" + option + "' is invalid.");
+      }
    }
 
 }
