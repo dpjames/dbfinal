@@ -134,7 +134,100 @@ public class Owner {
       }
    }
 
-   public static void Revenue() {
+   public static void Revenue(char resOpt) throws SQLException{
+      int resOption;
+      if (resOpt == 'c') {
+         resOption = 3;
+      }
+      else if (resOpt == 'd') {
+         resOption = 4;
+      }
+      else if (resOpt == 'r') {
+         resOption = 5;
+      }
+      else if (resOpt == 'q') {
+         return;
+      }
+      else {
+         System.out.println("Invalid data option.");
+         return;
+      }
 
+      String query = 
+         "SELECT RoomName, MONTHNAME(CheckOut) 'Month', COUNT(*) as resCount, " +
+            "SUM(DATEDIFF(CheckOut, CheckIn)) as daysOcc, " +
+            "SUM(DATEDIFF(CheckOut, CheckIn) * Rate) as revenue\n" +
+         "FROM reservations, rooms ro\n" +
+         "WHERE ro.RoomId = Room AND YEAR(CheckOut) = '2010'\n" +
+         "GROUP BY RoomName, MONTHNAME(CheckOut), MONTH(CheckOut)\n" +
+         "ORDER BY RoomName, MONTH(CheckOut);";
+
+      ResultSet res = Tables.doQuery(query, conn);
+      // try{
+      //    Tables.prettyPrint(res);
+      // }catch(SQLException e){
+      //    System.out.println(e);
+      // }
+
+      ArrayList<ArrayList<String>> table = new ArrayList<ArrayList<String>>();
+      ArrayList<String> cnames = new ArrayList<String>();
+      cnames.add("Room");
+      ArrayList<Integer> totalRow = new ArrayList<Integer>();
+      for (int i = 0; i < 13; i++) {
+         totalRow.add(0);
+      }
+      ArrayList<String> totalRowStr = new ArrayList<String>();
+      totalRowStr.add("Total: ");
+      res.next();
+      for (int j = 0; j < 10; j++){
+         ArrayList<String> row = new ArrayList<String>();
+         row.add(res.getString(1));
+         int sum = 0;
+
+         for (int i = 1; i <= 12; i++){
+            if (cnames.size() < 13) {
+               cnames.add(res.getString(2));
+            }
+
+            row.add(res.getString(resOption));
+            sum += res.getInt(resOption);
+            totalRow.set(i-1, totalRow.get(i-1) + res.getInt(resOption));
+            res.next();
+         }
+         if (table.size() == 0) {
+            cnames.add("Total");
+            table.add(cnames);
+         }
+
+         row.add(Integer.toString(sum));
+         totalRow.set(12, totalRow.get(12) + sum);
+         table.add(row);
+      }
+
+      for (Integer i : totalRow) {
+         totalRowStr.add(i.toString());
+      }
+      table.add(totalRowStr);
+
+      for(int i = 0; i < 171; i++){
+         System.out.print("-");
+      }
+      int maxlens[] = {25, 10, 10, 6, 6, 5, 5, 5, 8, 10, 10, 10, 10, 8};
+      System.out.println("");
+      for(ArrayList<String> row : table) {
+         String fmtStr = "";
+         for(int i = 0; i < 14; i++){
+            fmtStr+=("| %-"+maxlens[i]+"s ");
+         }
+         Object varparams[] = row.toArray(new String[row.size()]);
+         System.out.format(fmtStr, varparams);
+         System.out.println("|");
+         for(int i = 0; i < 171; i++){
+            System.out.print("-");
+         }
+         System.out.println("");
+      }
+
+      System.out.println(table);
    }
 }

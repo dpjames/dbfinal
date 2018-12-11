@@ -156,7 +156,11 @@ public class InnReservations {
                occupancyMenu();
                break;
             case 'd':
-               System.out.println("revenueData\n");
+               try {
+                  Owner.Revenue(dataOpt);
+               } catch(Exception e) {
+                  System.out.println(e);
+               }
                break;
             case 's':
                System.out.println("browseRes()\n");
