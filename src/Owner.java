@@ -227,7 +227,7 @@ public class Owner {
          }
          System.out.println("");
       }
-
-      System.out.println(table);
    }
+
+
 }
