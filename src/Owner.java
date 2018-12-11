@@ -150,6 +150,7 @@ public class Owner {
       }
       else {
          System.out.println("Invalid data option.");
+         Revenue(InnReservations.revenueData());
          return;
       }
 
@@ -229,5 +230,68 @@ public class Owner {
       }
    }
 
+   public static void Reservations() {
+      while (true) {
+      int numDates = 2;
+      String dates[] = new String[2];
+      for (int i = 0; i < numDates; i++) {
+         System.out.print("Enter date (Month day): ");
+         dates[i] = InnReservations.getDate();
+      }
+
+      String query =
+         "SELECT Code, Room, CheckIn, CheckOut \n" +
+         "FROM reservations \n" +
+         "WHERE CheckIn >= '" + dates[0] + 
+            "' AND CheckIn <= '" + dates[1] + "';";
+
+      ResultSet results = Tables.doQuery(query, conn);
+      try{
+         Tables.prettyPrint(results);
+      }catch(SQLException e){
+         System.out.println(e);
+      }
+
+      String roomCode = InnReservations.getRoomCodeOrQ();
+      if (roomCode.equals("q")) {
+         return;
+      }
+
+      query = "SELECT Code, Room, CheckIn, CheckOut \n" +
+         "FROM reservations \n" +
+         "WHERE Room = '" + roomCode + 
+            "' AND CheckIn >= '" + dates[0] + 
+            "' AND CheckIn <= '" + dates[1] + "';";
+
+      try {
+         Tables.prettyPrint(Tables.doQuery(query, conn));
+      }catch(SQLException e){
+         System.out.println(e);
+      }
+
+      String resCode = InnReservations.getReservCodeOrQ();
+      System.out.println(resCode);
+      if (resCode.equals("q")) {
+         return;
+      }
+      query =
+         "SELECT *\n" +
+         "FROM reservations \n" +
+         "WHERE Code = " + resCode + ";";
+
+      results = Tables.doQuery(query, conn);
+      try{
+         Tables.prettyPrint(results);
+      }catch(SQLException e){
+         System.out.println(e);
+      }
+
+      if (InnReservations.askIfGoBack() == 'b') {
+         return;
+      }
+
+      }
+
+   }
 
 }

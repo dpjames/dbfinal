@@ -163,7 +163,7 @@ public class InnReservations {
                }
                break;
             case 's':
-               System.out.println("browseRes()\n");
+               Owner.Reservations();
                break;
             case 'r':   
                System.out.println("viewRooms\n");
