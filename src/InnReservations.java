@@ -400,7 +400,7 @@ public class InnReservations {
       Scanner input = new Scanner(System.in);
 
       System.out.print("Enter your first name: ");
-      String firstName = "'" + input.next() + "'";
+      String firstName = input.next();
       return firstName;
    }
 
@@ -409,7 +409,7 @@ public class InnReservations {
       Scanner input = new Scanner(System.in);
 
       System.out.print("Enter your last name: ");
-      String lastName = "'" + input.next() + "'";
+      String lastName = input.next();
       return lastName;
    }
 

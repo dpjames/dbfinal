@@ -8,18 +8,7 @@ public class Guest {
    public static void setConn(Connection c){
       conn = c;
    }
-   public static void roomsAndRates(){
-      Scanner in = new Scanner(System.in);
-      try {
-         String query = "select RoomId from rooms;";
-         Tables.prettyPrint(Tables.doQuery(query, conn)); 
-      } catch(SQLException e){
-         System.out.println(e);
-      }
-      String rid = Tables.escape(InnReservations.getRoomCodeOrQ());
-      if(rid.charAt(0) == 'q'){
-         return;
-      }
+   public static void showDetails(String rid){
       try {
          String query = "select * from rooms where RoomId = '"+rid+"';";
          ResultSet r = Tables.doQuery(query, conn);
@@ -33,6 +22,21 @@ public class Guest {
          System.out.println(e);
          return;
       }
+   }
+   public static void roomsAndRates(){
+      Scanner in = new Scanner(System.in);
+      try {
+         String query = "select RoomId from rooms;";
+         Tables.prettyPrint(Tables.doQuery(query, conn)); 
+      } catch(SQLException e){
+         System.out.println(e);
+      }
+      String rid = Tables.escape(InnReservations.getRoomCodeOrQ());
+      if(rid.charAt(0) == 'q'){
+         return;
+      }
+      showDetails(rid);
+      
 
       char seeAvail = InnReservations.availabilityOrGoBack();
       if(seeAvail == 'a'){
@@ -122,17 +126,18 @@ public class Guest {
          "( " + 
          "   select r.CheckOut from reservations r where r.Room = rms.Room " + 
              "and r.CheckIn <= '"+checkout+"'" + 
-         ");"; 
-      System.out.println(availableAll);
+         ") group by rms.Room having"+
+         " rms.Room = '"+rid.toUpperCase()+"';"; 
       try {
-         System.out.println("available for all: ");
-         Tables.prettyPrint(Tables.doQuery(availableAll, conn));
+         ResultSet r = Tables.doQuery(availableAll, conn);
+         if(r.next()){
+            char reserve = InnReservations.reserveOrGoBack();
+            if(reserve == 'r'){
+               placeReservation(rid, checkin, checkout);
+            }
+         }
       } catch(SQLException e) {
             //System.out.println(e);
-      }
-      char reserve = InnReservations.reserveOrGoBack();
-      if(reserve == 'r'){
-         makeReservation();
       }
    }
    public static void makeReservation(){
@@ -164,5 +169,126 @@ public class Guest {
       } catch (SQLException e) {
          //System.out.println(e);
       }
+      String rid = Tables.escape(InnReservations.getRoomCodeOrQ());
+      if(rid.charAt(0) == 'q'){
+         return;
+      }
+      showDetails(rid);
+      char reserve = InnReservations.reserveOrGoBack();
+      if(reserve == 'r'){
+         placeReservation(rid, checkin, checkout);
+      }
+   }
+   public static final String[][] discounts = {{"AARP",".85"},{"AAA",".9"}};
+   public static double discountMod(String dc){
+      for(int i = 0; i < discounts.length; i++){
+         if(dc.equals(discounts[i][0])){
+            return Double.parseDouble(discounts[i][1]);
+         }
+      }
+      System.out.println("no discount applied");
+      return 1;
+   }
+   public static double getBaseCost(String rid){
+      String query = "select BasePrice from rooms where RoomId = '"+rid+"'";
+      ResultSet res = null;
+      try {
+         res = Tables.doQuery(query, conn);
+         if(res.next()){
+            return Double.parseDouble(res.getString(1));
+         }
+      } catch (SQLException e){
+         System.out.println(e);
+      }
+      return -1; //this should be imnpossible through the system.
+
+   }
+   public static int getUID(){
+      String query = "select max(Code) from reservations";
+      ResultSet res = null;
+      try {
+         res = Tables.doQuery(query, conn);
+         if(res.next()){
+            return Integer.parseInt(res.getString(1)) + 1;
+         }
+      } catch (SQLException e){
+         System.out.println(e);
+      }
+      return -1; //this should be imnpossible through the system.
+   }
+   public static int getMaxPpl(String rid){
+      String query = "select MaxOcc from rooms where RoomId = '"+rid+"'";
+      ResultSet res = null;
+      try {
+         res = Tables.doQuery(query, conn);
+         if(res.next()){
+            return Integer.parseInt(res.getString(1));
+         }
+      } catch (SQLException e){
+         System.out.println(e);
+      }
+      return -1; //this should be imnpossible through the system.
+   }
+   public static void placeReservation(String rid, String checkin, String checkout){
+      System.out.println("Place a reservation for " + rid + 
+                        "\nFrom "+checkin+" to "+checkout+".");
+      String fname = InnReservations.getFirstName();
+      String lname = InnReservations.getLastName();
+      int maxppl = getMaxPpl(rid);
+      int tppl = 0;
+      int nadult = 0;
+      int nchild = 0;
+      do{
+         nadult = InnReservations.getNumAdults();
+         nchild = InnReservations.getNumChildren();
+         tppl = nadult + nchild;
+         if(tppl > maxppl){
+            System.out.println("too many people. max occ is: "+maxppl);
+         }
+      } while(tppl > maxppl);
+      String dc = InnReservations.getDiscount();
+      double rateMod = findRateMult(checkin,checkout) * discountMod(dc);
+      double base = getBaseCost(rid);
+      char go = InnReservations.reserveOrGoBack();
+      if(go == 'r'){
+         insertReservation(Tables.escape(fname), 
+                           Tables.escape(lname),
+                           nadult,
+                           nchild,
+                           base * rateMod,
+                           checkin,
+                           checkout,
+                           rid);
+      }
+   }
+
+   public static void insertReservation(String fname, String lname, int nadult, int nchild, double price, String checkin, String checkout, String rid){
+      int code = getUID();
+      System.out.println(code);
+      String query = 
+         "insert into reservations "+
+         "(Code, Room, CheckIn, CheckOut, Rate, LastName, FirstName, Adults, Kids) " +
+         "VALUES " +
+         "('"+code+"','"+rid+"','"+checkin+"','"+checkout+"',"+price+",'"+lname+"','"+
+         fname+"',"+nadult+","+nchild+")";
+      Tables.doUpdate(query, conn);
+      System.out.println("reservation made. Details:\n");
+      try {
+         Tables.prettyPrint(Tables.doQuery("select * from reservations where Code = '"+code+"'", conn));
+      } catch (SQLException e){
+         System.out.println(e);
+      }
    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
